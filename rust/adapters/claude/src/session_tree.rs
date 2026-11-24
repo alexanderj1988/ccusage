@@ -1,4 +1,7 @@
+mod build;
 mod source;
 
+pub(crate) use build::{SessionTrees, build_session_trees};
+
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

@@ -385,4 +385,28 @@ mod tests {
         assert_eq!(rows.len(), 1);
         assert!((rows[0].total_cost - 1.46).abs() < 1e-9);
     }
+
+    #[test]
+    fn session_tree_roots_match_session_rows() {
+        let fixture = crate::session_tree::tests::tree_fixture();
+        let shared = crate::session_tree::tests::tree_shared();
+        let (rows, trees) = Environment::with_var("CLAUDE_CONFIG_DIR", fixture.root()).run(|| {
+            let rows = load_session_rows(&shared, None).unwrap();
+            let entries = load_entries_since(&shared, None).unwrap();
+            let trees = crate::session_tree::build_session_trees(&entries, SortOrder::Desc).unwrap();
+            (rows, trees)
+        });
+        assert_eq!(rows.len(), trees.roots.len());
+        for root in &trees.roots {
+            let row = rows
+                .iter()
+                .find(|row| row.session_id.as_deref() == root.id.as_deref())
+                .unwrap();
+            assert_eq!(row.input_tokens, root.summary.input_tokens);
+            assert_eq!(row.output_tokens, root.summary.output_tokens);
+            assert_eq!(row.cache_creation_tokens, root.summary.cache_creation_tokens);
+            assert_eq!(row.cache_read_tokens, root.summary.cache_read_tokens);
+            assert_eq!(row.total_cost.to_bits(), root.summary.total_cost.to_bits());
+        }
+    }
 }
