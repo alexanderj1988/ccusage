@@ -33,8 +33,8 @@ pub use output::{
     first_column, format_currency, format_models_multiline, format_number, json_float,
     json_value_u64, non_empty_json_string, print_estimated_pricing_notes_for_models,
     print_json_or_jq, print_missing_pricing_warnings_for_models, print_usage_table,
-    print_usage_table_with_options, sanitize_terminal_text, should_use_compact_layout,
-    summary_period, totals_json, wants_json,
+    print_usage_table_with_options, print_usage_tree_table, sanitize_terminal_text,
+    should_use_compact_layout, summary_period, totals_json, tree_report_json, wants_json,
 };
 pub use pricing::{Pricing, PricingMap};
 pub(crate) use project_names::parse_project_aliases;

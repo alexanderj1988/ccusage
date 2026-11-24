@@ -75,13 +75,6 @@ pub(super) struct ClaudeEntry {
     pub(super) original_model: Option<String>,
     pub(super) request: dedupe::Request,
     pub(super) is_sidechain: bool,
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "read by session tree classification in a later change"
-        )
-    )]
     pub(super) source_file: Arc<Path>,
     pub(super) entry: LoadedEntry,
 }

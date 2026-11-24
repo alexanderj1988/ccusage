@@ -197,6 +197,10 @@ fn unresolvable_spawn_id_attaches_to_session() {
     let entries = Environment::with_var("CLAUDE_CONFIG_DIR", fixture.root())
         .run(|| crate::load_entries_since(&tree_shared(), None).unwrap());
     let trees = build_session_trees(&entries, SortOrder::Desc).unwrap();
-    let labels: Vec<&str> = trees.roots[0].children.iter().map(|c| c.label.as_str()).collect();
+    let labels: Vec<&str> = trees.roots[0]
+        .children
+        .iter()
+        .map(|c| c.label.as_str())
+        .collect();
     assert_eq!(labels, ["main thread", "orphan"]);
 }

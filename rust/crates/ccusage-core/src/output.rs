@@ -1,6 +1,7 @@
 mod format;
 mod json;
 mod table;
+mod tree;
 mod warnings;
 
 pub use format::{format_currency, format_models_multiline, format_number, sanitize_terminal_text};
@@ -14,6 +15,7 @@ pub use table::{
     UsageTableOptions, first_column, print_usage_table, print_usage_table_with_options,
     should_use_compact_layout,
 };
+pub use tree::{print_usage_tree_table, tree_report_json};
 pub use warnings::{
     print_estimated_pricing_notes_for_models, print_missing_pricing_warnings_for_models,
 };
