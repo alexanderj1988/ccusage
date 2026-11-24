@@ -1,6 +1,6 @@
 use ccusage_core::{
     format_currency, format_number, sanitize_terminal_text, short_model_name,
-    tree::{FlatRow, UsageTreeNode},
+    tree::{FlatRow, TreeNodeKind, UsageTreeNode},
 };
 use ratatui::{
     Frame,
@@ -177,6 +177,8 @@ fn table_row(row: &FlatRow<'_>, columns: Columns) -> Row<'static> {
     let family = dominant_family(summary);
     let task_style = if row.depth == 0 {
         Style::default().add_modifier(Modifier::BOLD)
+    } else if node.kind == TreeNodeKind::Model {
+        Style::default().fg(Color::DarkGray)
     } else {
         Style::default()
     };

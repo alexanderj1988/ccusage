@@ -4,7 +4,7 @@ expression: "draw(58, 14, 0).backend()"
 ---
 "┌────────────────────────────────────────────────────────┐"
 "│Claude Code Usage Report - Sessions                     │"
-"│Detected: Claude · 1 sessions · subagents resolved      │"
+"│Detected: Claude · 1 session · subagents resolved       │"
 "└────────────────────────────────────────────────────────┘"
 "┌────────────────────────────────────────────────────────┐"
 "│Task            Input      Output     Cost (USD) Share  │"

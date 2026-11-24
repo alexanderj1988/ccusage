@@ -186,11 +186,15 @@ fn run_session_tree(args: SessionArgs, project: Option<&str>) -> Result<()> {
             shared.no_cost,
         );
     }
-    if !trees.roots.is_empty() && ccusage_tui::interactive_terminal_available() {
+    let subtitle = tree_subtitle(&trees.roots);
+    let mut roots = trees.roots;
+    ccusage_core::tree::add_model_rows(&mut roots);
+    ccusage_core::tree::assign_shares(&mut roots);
+    if !roots.is_empty() && ccusage_tui::interactive_terminal_available() {
         let report = ccusage_tui::TreeReport {
             title: SESSION_TREE_TITLE.to_string(),
-            subtitle: tree_subtitle(&trees.roots),
-            roots: trees.roots.clone(),
+            subtitle,
+            roots: roots.clone(),
             no_cost: shared.no_cost,
         };
         let initial = if args.id.is_some() {
@@ -205,7 +209,7 @@ fn run_session_tree(args: SessionArgs, project: Option<&str>) -> Result<()> {
             }
         }
     }
-    print_usage_tree_table(SESSION_TREE_TITLE, &trees.roots, &shared)
+    print_usage_tree_table(SESSION_TREE_TITLE, &roots, &shared)
 }
 
 fn tree_subtitle(roots: &[ccusage_core::tree::UsageTreeNode]) -> String {

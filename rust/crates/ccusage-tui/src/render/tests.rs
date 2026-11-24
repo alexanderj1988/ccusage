@@ -80,7 +80,7 @@ fn report() -> TreeReport {
     assign_shares(&mut roots);
     TreeReport {
         title: "Claude Code Usage Report - Sessions".to_string(),
-        subtitle: "Detected: Claude · 1 sessions · subagents resolved".to_string(),
+        subtitle: "Detected: Claude · 1 session · subagents resolved".to_string(),
         roots,
         no_cost: false,
     }
@@ -125,6 +125,24 @@ fn no_cost_hides_cost_share_and_cost_panel() {
         ..report()
     };
     insta::assert_snapshot!("tree_no_cost", draw_report(report, 170, 20, 2).backend());
+}
+
+#[test]
+fn model_rows_name_each_model_and_parents_count_them() {
+    let mut report = report();
+    let main = &mut report.roots[0].children[0];
+    let switched = node(
+        TreeNodeKind::Main,
+        "main",
+        "main thread",
+        "main",
+        &[("claude-opus-4-7", 2.5), ("claude-haiku-4-5", 0.59)],
+        Vec::new(),
+    );
+    *main = switched;
+    ccusage_core::tree::add_model_rows(&mut report.roots);
+    assign_shares(&mut report.roots);
+    insta::assert_snapshot!("tree_model_rows", draw_report(report, 170, 22, 0).backend());
 }
 
 #[test]

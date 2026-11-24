@@ -107,10 +107,13 @@ pub(super) fn tree_row_values(
     let node = row.node;
     let summary = &node.summary;
     let label = format!("{}{}", row.prefix, sanitize_terminal_text(&node.label));
-    let label = if node.kind == TreeNodeKind::Session {
-        color(shared, label, Color::Blue)
-    } else {
-        label
+    let label = match node.kind {
+        TreeNodeKind::Session => color(shared, label, Color::Blue),
+        TreeNodeKind::Model => color(shared, label, Color::Grey),
+        TreeNodeKind::Main
+        | TreeNodeKind::Subagent
+        | TreeNodeKind::Own
+        | TreeNodeKind::Workflow => label,
     };
     let mut values = vec![
         label,
@@ -165,7 +168,7 @@ fn tree_node_json(node: &UsageTreeNode) -> Value {
         TreeNodeKind::Session => Some("sessionId"),
         TreeNodeKind::Subagent => Some("agentId"),
         TreeNodeKind::Workflow => Some("workflowId"),
-        TreeNodeKind::Main | TreeNodeKind::Own => None,
+        TreeNodeKind::Main | TreeNodeKind::Own | TreeNodeKind::Model => None,
     };
     if let Some(object) = value.as_object_mut() {
         if let Some(field) = id_field {

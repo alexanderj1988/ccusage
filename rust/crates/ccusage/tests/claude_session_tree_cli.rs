@@ -169,3 +169,20 @@ fn flat_session_json_is_unchanged_without_tree() {
     assert!(report["sessions"][0].get("children").is_none());
     assert_eq!(report["totals"]["totalCost"], 7.25);
 }
+
+#[test]
+fn tree_table_splits_a_session_that_switched_models() {
+    let fixture = fs_fixture!({
+        "projects/project-a/switch.jsonl": [
+            r#"{"type":"ai-title","aiTitle":"chore: bump eslint config","sessionId":"switch"}"#,
+            r#"{"timestamp":"2026-11-24T10:00:00Z","sessionId":"switch","requestId":"req-1","costUSD":0.38,"message":{"id":"msg-1","model":"claude-opus-4-7","usage":{"input_tokens":400,"output_tokens":20}}}"#,
+            r#"{"timestamp":"2026-11-24T10:05:00Z","sessionId":"switch","requestId":"req-2","costUSD":0.14,"message":{"id":"msg-2","model":"claude-haiku-4-5","usage":{"input_tokens":500,"output_tokens":30}}}"#,
+        ].join("\n"),
+    });
+    let table = run_cli(&fixture, &ARGS);
+    insta::assert_snapshot!("claude_session_tree_table_model_rows", table);
+
+    let args = ARGS.iter().copied().chain(["--json"]).collect::<Vec<_>>();
+    let report: Value = serde_json::from_str(&run_cli(&fixture, &args)).unwrap();
+    assert_eq!(report["sessions"][0]["children"], serde_json::json!([]));
+}

@@ -10,6 +10,7 @@ pub enum TreeNodeKind {
     Subagent,
     Own,
     Workflow,
+    Model,
 }
 
 #[derive(Clone, Debug)]
@@ -27,14 +28,65 @@ pub struct UsageTreeNode {
 }
 
 impl UsageTreeNode {
-    /// Parents leave the cell empty; their children name the models row by row.
     pub fn model_label(&self) -> String {
-        if self.children.is_empty() {
-            crate::format_model_list(&self.summary.models_used)
-        } else {
-            String::new()
+        let names = distinct_model_names(&self.summary.models_used);
+        match names.as_slice() {
+            [single] => single.clone(),
+            names => format!("{} models", names.len()),
         }
     }
+}
+
+fn distinct_model_names(models: &[String]) -> Vec<String> {
+    let mut names = models
+        .iter()
+        .map(|model| crate::short_model_name(model))
+        .collect::<Vec<_>>();
+    names.sort();
+    names.dedup();
+    names
+}
+
+/// Gives every leaf that used several models one child row per model, most expensive first.
+pub fn add_model_rows(nodes: &mut [UsageTreeNode]) {
+    for node in nodes {
+        if !node.children.is_empty() {
+            add_model_rows(&mut node.children);
+        } else if node.kind != TreeNodeKind::Model
+            && distinct_model_names(&node.summary.models_used).len() > 1
+        {
+            node.children = model_rows(node);
+        }
+    }
+}
+
+fn model_rows(node: &UsageTreeNode) -> Vec<UsageTreeNode> {
+    let mut breakdowns = node.summary.model_breakdowns.clone();
+    breakdowns.sort_by(|a, b| b.cost.total_cmp(&a.cost));
+    breakdowns
+        .into_iter()
+        .map(|breakdown| UsageTreeNode {
+            kind: TreeNodeKind::Model,
+            key: format!("model:{}", breakdown.model_name.replace('/', ":")),
+            id: None,
+            label: crate::short_model_name(&breakdown.model_name),
+            agent_type: String::new(),
+            summary: UsageSummary {
+                input_tokens: breakdown.input_tokens,
+                output_tokens: breakdown.output_tokens,
+                cache_creation_tokens: breakdown.cache_creation_tokens,
+                cache_read_tokens: breakdown.cache_read_tokens,
+                extra_total_tokens: breakdown.extra_total_tokens,
+                total_cost: breakdown.cost,
+                models_used: vec![breakdown.model_name.clone()],
+                model_breakdowns: vec![breakdown],
+                ..UsageSummary::default()
+            },
+            first_timestamp: node.first_timestamp,
+            share: 0.0,
+            children: Vec::new(),
+        })
+        .collect()
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -62,7 +114,10 @@ pub fn sort_nodes(nodes: &mut [UsageTreeNode], order: TreeOrder) {
 fn thread_rank(node: &UsageTreeNode) -> u8 {
     match node.kind {
         TreeNodeKind::Main | TreeNodeKind::Own => 0,
-        TreeNodeKind::Session | TreeNodeKind::Subagent | TreeNodeKind::Workflow => 1,
+        TreeNodeKind::Session
+        | TreeNodeKind::Subagent
+        | TreeNodeKind::Workflow
+        | TreeNodeKind::Model => 1,
     }
 }
 

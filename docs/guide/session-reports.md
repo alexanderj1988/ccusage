@@ -89,7 +89,7 @@ In a terminal the view is interactive:
 
 Narrow terminals drop the share bar first, then the cache columns, the Agent column, and the Model column. The detail panel is hidden below 60 columns.
 
-When the output is piped or `--json` is set, ccusage prints the fully expanded tree instead of starting the interactive view. Session labels come from the session title (`/rename` or the generated title); subagent labels come from the task description Claude Code stores next to each subagent transcript. Subagents that started their own subagents appear nested, with an `own turns` row for their own usage, and workflows appear as `workflow wf_<id>` nodes. A session without subagents has no children.
+When the output is piped or `--json` is set, ccusage prints the fully expanded tree instead of starting the interactive view. Session labels come from the session title (`/rename` or the generated title); subagent labels come from the task description Claude Code stores next to each subagent transcript. Subagents that started their own subagents appear nested, with an `own turns` row for their own usage, and workflows appear as `workflow wf_<id>` nodes. The Model column names the model when a row used one, and `N models` when it used several; a row that used several models without having subagents gets one child row per model with that model's tokens, cost, and share. A session without subagents that never switched models has no children.
 
 The tree is available for Claude Code only; `ccusage session --tree` prints a hint to use `ccusage claude session --tree`. A session's tree adds up to its row in `ccusage claude session`. See [JSON Output](/guide/json-output#session-tree-reports) for the nested `children` structure.
 
