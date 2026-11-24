@@ -17,7 +17,6 @@ pub struct TreeViewState {
     expanded: HashSet<String>,
     selected_key: Option<String>,
     order: TreeOrder,
-    #[expect(dead_code, reason = "read by the renderer added in the next task")]
     pub(crate) table: TableState,
 }
 

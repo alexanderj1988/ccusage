@@ -576,6 +576,7 @@ name = "ccusage-tui"
 version = "0.0.0"
 dependencies = [
  "ccusage-core",
+ "insta",
  "ratatui",
 ]
 
