@@ -186,6 +186,27 @@ fn run_session_tree(args: SessionArgs, project: Option<&str>) -> Result<()> {
             shared.no_cost,
         );
     }
+    if !trees.roots.is_empty() && ccusage_tui::interactive_terminal_available() {
+        let report = ccusage_tui::TreeReport {
+            title: SESSION_TREE_TITLE.to_string(),
+            subtitle: format!(
+                "Detected: Claude · {} sessions · subagents resolved",
+                trees.roots.len()
+            ),
+            roots: trees.roots.clone(),
+        };
+        let initial = if args.id.is_some() {
+            ccusage_tui::InitialView::Single
+        } else {
+            ccusage_tui::InitialView::Overview
+        };
+        match ccusage_tui::run(report, initial) {
+            Ok(()) => return Ok(()),
+            Err(error) => {
+                ccusage_core::debug_log(&shared, format!("Interactive view unavailable: {error}"));
+            }
+        }
+    }
     print_usage_tree_table(SESSION_TREE_TITLE, &trees.roots, &shared)
 }
 

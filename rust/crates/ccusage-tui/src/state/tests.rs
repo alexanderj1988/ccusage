@@ -191,3 +191,16 @@ fn quit_keys() {
         assert_eq!(state.handle_key(&mut roots, event, 10), Action::Quit);
     }
 }
+
+#[test]
+fn initial_views_set_order_and_expansion() {
+    let mut overview = roots();
+    let state = crate::initial_state(&mut overview, crate::InitialView::Overview);
+    assert_eq!(state.order(), TreeOrder::CostDesc);
+    assert_eq!(visible(&state, &overview), ["s1", "s2"]);
+
+    let mut single = roots();
+    let state = crate::initial_state(&mut single, crate::InitialView::Single);
+    assert_eq!(state.order(), TreeOrder::Chronological);
+    assert_eq!(visible(&state, &single).len(), 7);
+}

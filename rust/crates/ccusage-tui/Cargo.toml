@@ -6,6 +6,7 @@ publish.workspace = true
 
 [dependencies]
 ccusage-core.workspace = true
+ccusage-terminal.workspace = true
 ratatui.workspace = true
 
 [dev-dependencies]

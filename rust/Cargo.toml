@@ -38,6 +38,7 @@ ccusage-environment = { path = "crates/ccusage-environment" }
 ccusage-pricing-snapshots = { path = "crates/ccusage-pricing-snapshots" }
 ccusage-telemetry = { path = "crates/ccusage-telemetry" }
 ccusage-terminal = { path = "crates/ccusage-terminal" }
+ccusage-tui = { path = "crates/ccusage-tui" }
 ccusage-test-support = { path = "crates/ccusage-test-support", features = ["test-environment"] }
 ccusage-zstd = { path = "crates/ccusage-zstd" }
 assert_fs = "1.1.4"

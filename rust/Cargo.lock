@@ -232,6 +232,7 @@ dependencies = [
  "ccusage-config",
  "ccusage-core",
  "ccusage-test-support",
+ "ccusage-tui",
  "insta",
  "jiff",
  "memchr",
@@ -576,6 +577,7 @@ name = "ccusage-tui"
 version = "0.0.0"
 dependencies = [
  "ccusage-core",
+ "ccusage-terminal",
  "insta",
  "ratatui",
 ]
