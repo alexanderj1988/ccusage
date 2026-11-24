@@ -20,7 +20,8 @@
 		"claude_session_options": [
 			"shared_claude_options",
 			"claude_project_options",
-			"session_options"
+			"session_options",
+			"claude_session_tree_options"
 		],
 		"claude_weekly_options": [
 			"shared_claude_options",

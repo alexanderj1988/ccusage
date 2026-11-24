@@ -480,7 +480,11 @@ fn parse_top_level_session_command(
     _config: &dyn CliConfig,
     initial_options: RootOptions,
 ) -> Result<Command, String> {
-    let mut args = SessionArgs { shared, id: None };
+    let mut args = SessionArgs {
+        shared,
+        id: None,
+        tree: false,
+    };
     let mut project = None;
     let mut sections = initial_options.sections;
     let mut by_agent = initial_options.by_agent;
@@ -493,6 +497,12 @@ fn parse_top_level_session_command(
         }
         match parser.next_flag()?.as_str() {
             "-i" | "--id" => args.id = Some(parser.value_for("--id")?),
+            "--tree" => {
+                return Err(
+                    "The --tree option is only available for Claude Code sessions.\nUse \"ccusage claude session --tree\"."
+                        .to_string(),
+                );
+            }
             flag => return Err(format!("Unknown session option '{flag}'")),
         }
     }

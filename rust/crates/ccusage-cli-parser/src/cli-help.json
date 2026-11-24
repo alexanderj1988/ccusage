@@ -333,6 +333,13 @@
 			"description": "Filter to specific session ID"
 		}
 	],
+	"claude_session_tree_options": [
+		{
+			"flags": "--tree",
+			"description": "Show each session as a tree of its main thread and subagents (interactive in a terminal)",
+			"default": "false"
+		}
+	],
 	"shared_claude_options": [
 		{
 			"flags": "-s, --since <since>",

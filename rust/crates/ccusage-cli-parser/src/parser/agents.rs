@@ -132,7 +132,11 @@ fn parse_claude_session_command(
     parser: &mut ArgParser,
     shared: SharedArgs,
 ) -> Result<Command, String> {
-    let mut args = SessionArgs { shared, id: None };
+    let mut args = SessionArgs {
+        shared,
+        id: None,
+        tree: false,
+    };
     let mut project = None;
     while parser.peek().is_some() {
         if parse_claude_report_arg(parser, &mut args.shared, &mut project)? {
@@ -140,6 +144,7 @@ fn parse_claude_session_command(
         }
         match parser.next_flag()?.as_str() {
             "-i" | "--id" => args.id = Some(parser.value_for("--id")?),
+            "--tree" => args.tree = true,
             flag => return Err(format!("Unknown session option '{flag}'")),
         }
     }

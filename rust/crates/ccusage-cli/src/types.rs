@@ -226,6 +226,7 @@ pub struct WeeklyArgs {
 pub struct SessionArgs {
     pub shared: SharedArgs,
     pub id: Option<String>,
+    pub tree: bool,
 }
 
 #[derive(Clone)]

@@ -496,3 +496,44 @@ fn rejects_grok_path_option() {
 
     assert_eq!(error, "Unknown option '--grok-path'");
 }
+
+#[test]
+fn parses_claude_session_tree_flag() {
+    let cli = parse(&["ccusage", "claude", "session", "--tree", "--id", "abc"]);
+    let Command::Claude {
+        report: ClaudeReport::Session(args),
+        ..
+    } = cli
+    else {
+        panic!("expected claude session command");
+    };
+    assert!(args.tree);
+    assert_eq!(args.id.as_deref(), Some("abc"));
+}
+
+#[test]
+fn claude_session_defaults_to_flat_view() {
+    let Command::Claude {
+        report: ClaudeReport::Session(args),
+        ..
+    } = parse(&["ccusage", "claude", "session"])
+    else {
+        panic!("expected claude session command");
+    };
+    assert!(!args.tree);
+}
+
+#[test]
+fn rejects_tree_on_all_agent_session_report() {
+    let error = parse_error(&["ccusage", "session", "--tree"]);
+    assert_eq!(
+        error,
+        "The --tree option is only available for Claude Code sessions.\nUse \"ccusage claude session --tree\"."
+    );
+}
+
+#[test]
+fn claude_session_help_lists_tree_option() {
+    let help = help_text_for_args(&["claude".to_string(), "session".to_string()]);
+    assert!(help.contains("--tree"));
+}
