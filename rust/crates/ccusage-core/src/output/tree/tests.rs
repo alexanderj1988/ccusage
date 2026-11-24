@@ -66,6 +66,9 @@ fn row_values_show_prefix_models_and_share() {
     assert_eq!(values[0], "└─ agent-a");
     assert_eq!(values[2], "opus-4-7");
     assert_eq!(values.last().map(String::as_str), Some("25.0%"));
+
+    let parent = tree_row_values(&rows[0], false, &crate::cli::SharedArgs::default());
+    assert_eq!(parent[2], "");
 }
 
 #[test]

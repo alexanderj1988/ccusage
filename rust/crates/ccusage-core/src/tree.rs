@@ -26,6 +26,17 @@ pub struct UsageTreeNode {
     pub children: Vec<UsageTreeNode>,
 }
 
+impl UsageTreeNode {
+    /// Parents leave the cell empty; their children name the models row by row.
+    pub fn model_label(&self) -> String {
+        if self.children.is_empty() {
+            crate::format_model_list(&self.summary.models_used)
+        } else {
+            String::new()
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TreeOrder {
     Chronological,

@@ -1,5 +1,5 @@
 use ccusage_core::{
-    format_currency, format_model_list, format_number, sanitize_terminal_text, short_model_name,
+    format_currency, format_number, sanitize_terminal_text, short_model_name,
     tree::{FlatRow, UsageTreeNode},
 };
 use ratatui::{
@@ -95,7 +95,7 @@ fn render_table(
     if columns.model {
         headers.push("Model");
         widths.push(content_width(rows, "Model", MODEL_MAX, |node| {
-            format_model_list(&node.summary.models_used)
+            node.model_label()
         }));
     }
     headers.extend(["Input", "Output"]);
@@ -195,10 +195,7 @@ fn table_row(row: &FlatRow<'_>, columns: Columns) -> Row<'static> {
         );
     }
     if columns.model {
-        cells.push(
-            Cell::from(format_model_list(&summary.models_used))
-                .style(Style::default().fg(family.color())),
-        );
+        cells.push(Cell::from(node.model_label()).style(Style::default().fg(family.color())));
     }
     cells.extend([
         right(format_number(summary.input_tokens)),

@@ -1,7 +1,7 @@
 use serde_json::{Value, json};
 
 use super::{
-    format_currency, format_model_list, format_number, print_estimated_pricing_notes_for_models,
+    format_currency, format_number, print_estimated_pricing_notes_for_models,
     print_missing_pricing_warnings_for_models, sanitize_terminal_text,
     table::{empty_usage_table_message, should_use_compact_layout},
     totals_json,
@@ -115,7 +115,7 @@ pub(super) fn tree_row_values(
     let mut values = vec![
         label,
         sanitize_terminal_text(&node.agent_type),
-        format_model_list(&summary.models_used),
+        node.model_label(),
         format_number(summary.input_tokens),
         format_number(summary.output_tokens),
     ];
