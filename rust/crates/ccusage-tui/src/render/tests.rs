@@ -115,6 +115,11 @@ fn narrow_layout_drops_bar_cache_columns_and_detail() {
 }
 
 #[test]
+fn mid_layout_drops_cache_keeps_agent_and_model() {
+    insta::assert_snapshot!("tree_mid", draw(100, 16, 0).backend());
+}
+
+#[test]
 fn dominant_family_is_other_when_models_mix() {
     assert_eq!(
         dominant_family(&summary(&[("claude-opus-4-7", 1.0)])),

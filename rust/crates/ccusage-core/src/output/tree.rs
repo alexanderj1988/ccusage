@@ -1,7 +1,7 @@
 use serde_json::{Value, json};
 
 use super::{
-    format_currency, format_number, print_estimated_pricing_notes_for_models,
+    format_currency, format_model_list, format_number, print_estimated_pricing_notes_for_models,
     print_missing_pricing_warnings_for_models, sanitize_terminal_text,
     table::{empty_usage_table_message, should_use_compact_layout},
     totals_json,
@@ -9,7 +9,7 @@ use super::{
 use crate::{
     Color, ColumnKind, Result, SimpleTable, Totals, USAGE_COMPACT_WIDTH_THRESHOLD, UsageSummary,
     cli::SharedArgs,
-    color, print_box_title, short_model_name, terminal_width,
+    color, print_box_title, terminal_width,
     tree::{FlatRow, TreeNodeKind, UsageTreeNode, flatten_tree},
 };
 
@@ -113,7 +113,7 @@ pub(super) fn tree_row_values(
     let mut values = vec![
         label,
         sanitize_terminal_text(&node.agent_type),
-        model_list(&summary.models_used),
+        format_model_list(&summary.models_used),
         format_number(summary.input_tokens),
         format_number(summary.output_tokens),
     ];
@@ -127,16 +127,6 @@ pub(super) fn tree_row_values(
     }
     values.push(format!("{:.1}%", node.share * 100.0));
     values
-}
-
-fn model_list(models: &[String]) -> String {
-    let mut names = models
-        .iter()
-        .map(|model| short_model_name(model))
-        .collect::<Vec<_>>();
-    names.sort();
-    names.dedup();
-    names.join(" · ")
 }
 
 fn root_summaries(roots: &[UsageTreeNode]) -> Vec<UsageSummary> {

@@ -1,5 +1,15 @@
 use crate::short_model_name;
 
+pub fn format_model_list(models: &[String]) -> String {
+    let mut names = models
+        .iter()
+        .map(|model| short_model_name(model))
+        .collect::<Vec<_>>();
+    names.sort();
+    names.dedup();
+    names.join(" · ")
+}
+
 pub fn format_models_multiline(models: &[String]) -> String {
     let mut models = models
         .iter()

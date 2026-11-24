@@ -1,5 +1,6 @@
 use ccusage_core::{
-    format_currency, format_number, sanitize_terminal_text, short_model_name, tree::FlatRow,
+    format_currency, format_model_list, format_number, sanitize_terminal_text, short_model_name,
+    tree::{FlatRow, UsageTreeNode},
 };
 use ratatui::{
     Frame,
@@ -18,9 +19,17 @@ const BAR_WIDTH: usize = 10;
 const DETAIL_MIN_WIDTH: u16 = 60;
 const BAR_MIN_WIDTH: u16 = 150;
 const CACHE_MIN_WIDTH: u16 = 120;
+const AGENT_MIN_WIDTH: u16 = 100;
+const MODEL_MIN_WIDTH: u16 = 80;
+const SHORT_HELP_WIDTH: u16 = 110;
+const LEGEND_MIN_WIDTH: u16 = 90;
+const AGENT_MAX: usize = 18;
+const MODEL_MAX: usize = 32;
 
 #[derive(Clone, Copy)]
 struct Columns {
+    agent: bool,
+    model: bool,
     cache: bool,
     bar: bool,
 }
@@ -40,6 +49,8 @@ pub(crate) fn render(
     ])
     .areas(area);
     let columns = Columns {
+        agent: area.width >= AGENT_MIN_WIDTH,
+        model: area.width >= MODEL_MIN_WIDTH,
         cache: area.width >= CACHE_MIN_WIDTH,
         bar: area.width >= BAR_MIN_WIDTH,
     };
@@ -58,7 +69,7 @@ pub(crate) fn render(
     if show_detail && let Some(row) = rows.get(selected) {
         render_detail(frame, detail, &rows, row);
     }
-    render_footer(frame, footer);
+    render_footer(frame, footer, area.width);
     usize::from(body.height.saturating_sub(4))
 }
 
@@ -71,14 +82,22 @@ fn render_table(
     state: &mut TreeViewState,
     selected: usize,
 ) {
-    let mut headers = vec!["Task", "Agent", "Model", "Input", "Output"];
-    let mut widths = vec![
-        Constraint::Fill(3),
-        Constraint::Fill(1),
-        Constraint::Fill(1),
-        Constraint::Length(10),
-        Constraint::Length(10),
-    ];
+    let mut headers = vec!["Task"];
+    let mut widths = vec![Constraint::Fill(1)];
+    if columns.agent {
+        headers.push("Agent");
+        widths.push(content_width(rows, "Agent", AGENT_MAX, |node| {
+            sanitize_terminal_text(&node.agent_type)
+        }));
+    }
+    if columns.model {
+        headers.push("Model");
+        widths.push(content_width(rows, "Model", MODEL_MAX, |node| {
+            format_model_list(&node.summary.models_used)
+        }));
+    }
+    headers.extend(["Input", "Output"]);
+    widths.extend([Constraint::Length(10), Constraint::Length(10)]);
     if columns.cache {
         headers.extend(["Cache Create", "Cache Read", "Total Tokens"]);
         widths.extend([
@@ -99,17 +118,18 @@ fn render_table(
         .iter()
         .map(|root| root.summary.total_cost)
         .sum();
-    let mut total = vec![
-        Cell::from("Total"),
-        Cell::from(""),
-        Cell::from(""),
+    let mut total = vec![Cell::from("Total")];
+    total.extend(
+        (0..usize::from(columns.agent) + usize::from(columns.model)).map(|_| Cell::from("")),
+    );
+    total.extend([
         right(format_number(
             report.roots.iter().map(|r| r.summary.input_tokens).sum(),
         )),
         right(format_number(
             report.roots.iter().map(|r| r.summary.output_tokens).sum(),
         )),
-    ];
+    ]);
     if columns.cache {
         total.push(right(format_number(
             report
@@ -161,12 +181,23 @@ fn table_row(row: &FlatRow<'_>, columns: Columns) -> Row<'static> {
             sanitize_terminal_text(&node.label)
         ))
         .style(task_style),
-        Cell::from(sanitize_terminal_text(&node.agent_type))
-            .style(Style::default().fg(Color::Gray)),
-        Cell::from(model_list(&summary.models_used)).style(Style::default().fg(family.color())),
+    ];
+    if columns.agent {
+        cells.push(
+            Cell::from(sanitize_terminal_text(&node.agent_type))
+                .style(Style::default().fg(Color::Gray)),
+        );
+    }
+    if columns.model {
+        cells.push(
+            Cell::from(format_model_list(&summary.models_used))
+                .style(Style::default().fg(family.color())),
+        );
+    }
+    cells.extend([
         right(format_number(summary.input_tokens)),
         right(format_number(summary.output_tokens)),
-    ];
+    ]);
     if columns.cache {
         cells.push(right(format_number(summary.cache_creation_tokens)));
         cells.push(right(format_number(summary.cache_read_tokens)));
@@ -177,18 +208,24 @@ fn table_row(row: &FlatRow<'_>, columns: Columns) -> Row<'static> {
     Row::new(cells)
 }
 
-fn right(text: String) -> Cell<'static> {
-    Cell::from(Line::from(text).right_aligned())
+fn content_width(
+    rows: &[FlatRow<'_>],
+    header: &str,
+    max: usize,
+    text: impl Fn(&UsageTreeNode) -> String,
+) -> Constraint {
+    let width = rows
+        .iter()
+        .map(|row| text(row.node).chars().count())
+        .chain([header.chars().count()])
+        .max()
+        .unwrap_or(0)
+        .clamp(header.chars().count(), max);
+    Constraint::Length(u16::try_from(width).unwrap_or(u16::MAX))
 }
 
-fn model_list(models: &[String]) -> String {
-    let mut names = models
-        .iter()
-        .map(|model| short_model_name(model))
-        .collect::<Vec<_>>();
-    names.sort();
-    names.dedup();
-    names.join(" · ")
+fn right(text: String) -> Cell<'static> {
+    Cell::from(Line::from(text).right_aligned())
 }
 
 fn filled(share: f64, width: usize) -> usize {
@@ -292,12 +329,17 @@ fn render_detail(frame: &mut Frame<'_>, area: Rect, rows: &[FlatRow<'_>], row: &
     );
 }
 
-fn render_footer(frame: &mut Frame<'_>, area: Rect) {
+fn render_footer(frame: &mut Frame<'_>, area: Rect, width: u16) {
+    let help = if width < SHORT_HELP_WIDTH {
+        "↑↓ move  ←→ fold  s sort  q quit"
+    } else {
+        "↑↓ move  ←→ collapse/expand  e expand all  c collapse all  s sort  q quit"
+    };
+    let legend_width = if width < LEGEND_MIN_WIDTH { 0 } else { 28 };
     let [keys, legend] =
-        Layout::horizontal([Constraint::Fill(1), Constraint::Length(28)]).areas(area);
+        Layout::horizontal([Constraint::Fill(1), Constraint::Length(legend_width)]).areas(area);
     frame.render_widget(
-        Paragraph::new("↑↓ move  ←→ collapse/expand  e expand all  c collapse all  s sort  q quit")
-            .style(Style::default().fg(Color::Gray)),
+        Paragraph::new(help).style(Style::default().fg(Color::Gray)),
         keys,
     );
     frame.render_widget(
