@@ -94,12 +94,18 @@ pub(crate) fn read_session_title(main_transcript: &Path) -> Option<String> {
             continue;
         };
         match record.kind.as_str() {
-            "custom-title" => custom = record.custom_title.or(custom),
-            "ai-title" => ai = record.ai_title.or(ai),
+            "custom-title" => custom = non_blank(record.custom_title).or(custom),
+            "ai-title" => ai = non_blank(record.ai_title).or(ai),
             _ => {}
         }
     }
-    custom.or(ai).filter(|title| !title.trim().is_empty())
+    custom.or(ai)
+}
+
+fn non_blank(title: Option<String>) -> Option<String> {
+    title
+        .map(|title| title.trim().to_string())
+        .filter(|title| !title.is_empty())
 }
 
 pub(crate) fn tool_use_ids(transcript: &Path) -> Vec<String> {

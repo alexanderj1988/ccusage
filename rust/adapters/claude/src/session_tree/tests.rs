@@ -81,7 +81,25 @@ fn custom_title_wins_over_latest_ai_title() {
         ]
         .join("\n"),
         "none.jsonl": r#"{"type":"user","message":{"content":"mentions ai-title\" in text"}}"#,
+        "blank-custom.jsonl": [
+            r#"{"type":"ai-title","aiTitle":"  valid ai  ","sessionId":"s"}"#,
+            r#"{"type":"custom-title","customTitle":"   ","sessionId":"s"}"#,
+        ]
+        .join("\n"),
+        "blank-later.jsonl": [
+            r#"{"type":"custom-title","customTitle":" kept ","sessionId":"s"}"#,
+            r#"{"type":"custom-title","customTitle":"","sessionId":"s"}"#,
+        ]
+        .join("\n"),
     });
+    assert_eq!(
+        read_session_title(&fixture.path("blank-custom.jsonl")).as_deref(),
+        Some("valid ai")
+    );
+    assert_eq!(
+        read_session_title(&fixture.path("blank-later.jsonl")).as_deref(),
+        Some("kept")
+    );
     assert_eq!(
         read_session_title(&fixture.path("with-custom.jsonl")).as_deref(),
         Some("renamed")
