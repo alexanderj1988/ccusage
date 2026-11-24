@@ -22,13 +22,17 @@ fn fixture() -> Fixture {
     })
 }
 
-fn run_cli(fixture: &Fixture, args: &[&str]) -> String {
-    let output = support::hermetic_command(fixture.root())
+fn run_raw(fixture: &Fixture, args: &[&str]) -> std::process::Output {
+    support::hermetic_command(fixture.root())
         .env("CLAUDE_CONFIG_DIR", fixture.root())
         .env("COLUMNS", "240")
         .args(args)
         .output()
-        .expect("failed to run ccusage");
+        .expect("failed to run ccusage")
+}
+
+fn run_cli(fixture: &Fixture, args: &[&str]) -> String {
+    let output = run_raw(fixture, args);
     assert!(
         output.status.success(),
         "ccusage {args:?} failed: {}",
@@ -82,6 +86,61 @@ fn tree_json_with_id_shows_only_that_session() {
     let report: Value = serde_json::from_str(&run_cli(&fixture, &args)).unwrap();
     assert_eq!(report["sessions"].as_array().map(Vec::len), Some(1));
     assert_eq!(report["sessions"][0]["sessionId"], "bbbbbbbb-1111");
+}
+
+#[test]
+fn tree_json_with_unknown_id_prints_null() {
+    let fixture = fixture();
+    let args = ARGS
+        .iter()
+        .copied()
+        .chain(["--json", "--id", "does-not-exist"])
+        .collect::<Vec<_>>();
+    assert_eq!(run_cli(&fixture, &args).trim(), "null");
+}
+
+#[test]
+fn tree_table_with_unknown_id_reports_on_stderr() {
+    let fixture = fixture();
+    let args = ARGS
+        .iter()
+        .copied()
+        .chain(["--id", "does-not-exist"])
+        .collect::<Vec<_>>();
+    let output = run_raw(&fixture, &args);
+    assert!(output.status.success());
+    assert!(output.stdout.is_empty());
+    assert!(
+        String::from_utf8_lossy(&output.stderr)
+            .contains("No session found with ID: does-not-exist")
+    );
+}
+
+#[test]
+fn tree_json_no_cost_strips_cost_fields_but_keeps_share() {
+    let fixture = fixture();
+    let args = ARGS
+        .iter()
+        .copied()
+        .chain(["--json", "--no-cost"])
+        .collect::<Vec<_>>();
+    let output = run_cli(&fixture, &args);
+    assert!(!output.contains("totalCost"));
+    let report: Value = serde_json::from_str(&output).unwrap();
+    assert!(report["sessions"][0].get("share").is_some());
+}
+
+#[test]
+fn tree_table_no_cost_has_no_cost_or_share_columns() {
+    let fixture = fixture();
+    let args = ARGS
+        .iter()
+        .copied()
+        .chain(["--no-cost"])
+        .collect::<Vec<_>>();
+    let output = run_cli(&fixture, &args);
+    assert!(!output.contains("Cost (USD)") && !output.contains("Share"));
+    insta::assert_snapshot!("claude_session_tree_table_no_cost", output);
 }
 
 #[test]
