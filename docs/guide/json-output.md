@@ -579,6 +579,38 @@ This excerpt shows one session; `totals` covers the complete report.
 
 This excerpt shows one session; `totals` covers the complete report.
 
+### Session Tree Reports
+
+`ccusage claude session --tree --json` nests each session's main thread and subagents under `children`. Nodes use the same token and cost fields as session rows, plus `kind`, `label`, and `share`:
+
+```json
+{
+	"sessions": [
+		{
+			"kind": "session",
+			"sessionId": "abc123",
+			"label": "Refactor the loader",
+			"totalCost": 1.25,
+			"share": 1,
+			"children": [
+				{ "kind": "main", "label": "main thread", "totalCost": 0.5, "share": 0.4, "children": [] },
+				{
+					"kind": "subagent",
+					"agentId": "a1b2c3",
+					"agentType": "Explore",
+					"label": "Find the loader entry points",
+					"totalCost": 0.75,
+					"share": 0.6,
+					"children": []
+				}
+			]
+		}
+	]
+}
+```
+
+`kind` is `session`, `main`, `subagent`, `own` (a subagent's own turns when it started subagents), or `workflow` (`workflowId`). Nodes also carry `inputTokens`, `outputTokens`, `cacheCreationTokens`, `cacheReadTokens`, `totalTokens`, `modelsUsed`, and `modelBreakdowns`; `share` is the fraction of the session's cost. A session without subagents has an empty `children`. See [Tree View](/guide/session-reports#tree-view).
+
 ### Claude Code Daily, Weekly, and Monthly Reports
 
 `ccusage claude daily`, `weekly`, and `monthly` use the same row fields as the unified reports, without `agent` and `metadata`, and with `date`, `week`, or `month` in place of `period`.

@@ -16,9 +16,14 @@ ccusage claude monthly
 
 # Claude Code sessions
 ccusage claude session
+
+# Cost per session, split into the main thread and subagents
+ccusage claude session --tree
 ```
 
 Most users can start with unified reports such as `ccusage daily`. Add the `claude` namespace only when you want to focus the same report shape on Claude Code usage or pass Claude-specific options.
+
+Use `--tree` on `ccusage claude session` to see where a session's cost went; see [Tree View](/guide/session-reports#tree-view).
 
 Use `--project <name>` with Claude daily, weekly, monthly, session, or blocks reports to override the configured project.
 

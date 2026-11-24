@@ -118,6 +118,7 @@ bunx ccusage codex statusline  # Preview Codex usage; --mcp serves its native st
 bunx ccusage claude daily --mode display
 bunx ccusage codex daily --speed fast
 bunx ccusage opencode weekly
+bunx ccusage claude session --tree  # cost per task, split by subagent
 bunx ccusage amp session
 bunx ccusage droid daily
 bunx ccusage codebuff daily
