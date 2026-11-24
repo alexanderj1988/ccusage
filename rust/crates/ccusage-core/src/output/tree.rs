@@ -59,7 +59,9 @@ pub fn print_usage_tree_table(
     if !shared.no_cost {
         total_row.push(total(format_currency(totals.total_cost)));
     }
-    total_row.push(String::new());
+    if !shared.no_cost {
+        total_row.push(String::new());
+    }
     table.separator();
     table.push(total_row);
     table.print()?;
@@ -91,9 +93,9 @@ fn tree_table_columns(compact: bool, no_cost: bool) -> (Vec<&'static str>, Vec<C
     if !no_cost {
         headers.push("Cost (USD)");
         columns.push(ColumnKind::Numeric);
+        headers.push("Share");
+        columns.push(ColumnKind::Numeric);
     }
-    headers.push("Share");
-    columns.push(ColumnKind::Numeric);
     (headers, columns)
 }
 
@@ -124,8 +126,8 @@ pub(super) fn tree_row_values(
     }
     if !shared.no_cost {
         values.push(format_currency(summary.total_cost));
+        values.push(format!("{:.1}%", node.share * 100.0));
     }
-    values.push(format!("{:.1}%", node.share * 100.0));
     values
 }
 

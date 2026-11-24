@@ -82,11 +82,20 @@ fn report() -> TreeReport {
         title: "Claude Code Usage Report - Sessions".to_string(),
         subtitle: "Detected: Claude · 1 sessions · subagents resolved".to_string(),
         roots,
+        no_cost: false,
     }
 }
 
 fn draw(width: u16, height: u16, select_down: usize) -> Terminal<TestBackend> {
-    let mut report = report();
+    draw_report(report(), width, height, select_down)
+}
+
+fn draw_report(
+    mut report: TreeReport,
+    width: u16,
+    height: u16,
+    select_down: usize,
+) -> Terminal<TestBackend> {
     let mut state = TreeViewState::new(&report.roots, true, TreeOrder::Chronological);
     for _ in 0..select_down {
         state.handle_key(
@@ -107,6 +116,15 @@ fn draw(width: u16, height: u16, select_down: usize) -> Terminal<TestBackend> {
 #[test]
 fn wide_layout_shows_all_columns_bar_and_detail() {
     insta::assert_snapshot!("tree_wide", draw(170, 20, 2).backend());
+}
+
+#[test]
+fn no_cost_hides_cost_share_and_cost_panel() {
+    let report = TreeReport {
+        no_cost: true,
+        ..report()
+    };
+    insta::assert_snapshot!("tree_no_cost", draw_report(report, 170, 20, 2).backend());
 }
 
 #[test]

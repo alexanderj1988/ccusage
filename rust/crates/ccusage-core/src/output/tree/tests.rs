@@ -67,3 +67,19 @@ fn row_values_show_prefix_models_and_share() {
     assert_eq!(values[2], "opus-4-7");
     assert_eq!(values.last().map(String::as_str), Some("25.0%"));
 }
+
+#[test]
+fn no_cost_drops_cost_and_share_columns() {
+    let mut session = leaf(TreeNodeKind::Session, "s1", Some("s1"), 2.0);
+    session.children = vec![leaf(TreeNodeKind::Subagent, "agent-a", Some("a"), 0.5)];
+    let rows = crate::tree::flatten_tree(std::slice::from_ref(&session), &|_| true);
+    let shared = crate::cli::SharedArgs {
+        no_cost: true,
+        ..crate::cli::SharedArgs::default()
+    };
+    let (headers, columns) = tree_table_columns(false, true);
+    assert!(!headers.contains(&"Cost (USD)") && !headers.contains(&"Share"));
+    let values = tree_row_values(&rows[1], false, &shared);
+    assert_eq!(values.len(), columns.len());
+    assert_eq!(values.last().map(String::as_str), Some("12"));
+}

@@ -189,11 +189,9 @@ fn run_session_tree(args: SessionArgs, project: Option<&str>) -> Result<()> {
     if !trees.roots.is_empty() && ccusage_tui::interactive_terminal_available() {
         let report = ccusage_tui::TreeReport {
             title: SESSION_TREE_TITLE.to_string(),
-            subtitle: format!(
-                "Detected: Claude · {} sessions · subagents resolved",
-                trees.roots.len()
-            ),
+            subtitle: tree_subtitle(&trees.roots),
             roots: trees.roots.clone(),
+            no_cost: shared.no_cost,
         };
         let initial = if args.id.is_some() {
             ccusage_tui::InitialView::Single
@@ -208,6 +206,22 @@ fn run_session_tree(args: SessionArgs, project: Option<&str>) -> Result<()> {
         }
     }
     print_usage_tree_table(SESSION_TREE_TITLE, &trees.roots, &shared)
+}
+
+fn tree_subtitle(roots: &[ccusage_core::tree::UsageTreeNode]) -> String {
+    let count = roots.len();
+    let noun = if count == 1 { "session" } else { "sessions" };
+    let resolved = roots.iter().any(|root| {
+        root.children
+            .iter()
+            .any(|child| child.kind != ccusage_core::tree::TreeNodeKind::Main)
+    });
+    let suffix = if resolved {
+        " · subagents resolved"
+    } else {
+        ""
+    };
+    format!("Detected: Claude · {count} {noun}{suffix}")
 }
 
 fn load_session_rows(shared: &SharedArgs, project: Option<&str>) -> Result<Vec<UsageSummary>> {

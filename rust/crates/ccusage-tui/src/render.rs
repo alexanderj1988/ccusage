@@ -32,6 +32,7 @@ struct Columns {
     model: bool,
     cache: bool,
     bar: bool,
+    cost: bool,
 }
 
 pub(crate) fn render(
@@ -52,7 +53,8 @@ pub(crate) fn render(
         agent: area.width >= AGENT_MIN_WIDTH,
         model: area.width >= MODEL_MIN_WIDTH,
         cache: area.width >= CACHE_MIN_WIDTH,
-        bar: area.width >= BAR_MIN_WIDTH,
+        bar: area.width >= BAR_MIN_WIDTH && !report.no_cost,
+        cost: !report.no_cost,
     };
     let rows = state.visible_rows(&report.roots);
     let selected = state.selected_index(&rows);
@@ -67,7 +69,7 @@ pub(crate) fn render(
     );
     render_table(frame, body, report, &rows, columns, state, selected);
     if show_detail && let Some(row) = rows.get(selected) {
-        render_detail(frame, detail, &rows, row);
+        render_detail(frame, detail, &rows, row, columns.cost);
     }
     render_footer(frame, footer, area.width);
     usize::from(body.height.saturating_sub(4))
@@ -106,11 +108,13 @@ fn render_table(
             Constraint::Length(13),
         ]);
     }
-    headers.extend(["Cost (USD)", "Share"]);
-    widths.extend([
-        Constraint::Length(10),
-        Constraint::Length(if columns.bar { 18 } else { 7 }),
-    ]);
+    if columns.cost {
+        headers.extend(["Cost (USD)", "Share"]);
+        widths.extend([
+            Constraint::Length(10),
+            Constraint::Length(if columns.bar { 18 } else { 7 }),
+        ]);
+    }
 
     let body = rows.iter().map(|row| table_row(row, columns));
     let total_cost: f64 = report
@@ -149,7 +153,9 @@ fn render_table(
             report.roots.iter().map(|r| r.summary.total_tokens()).sum(),
         )));
     }
-    total.extend([right(format_currency(total_cost)), Cell::from("")]);
+    if columns.cost {
+        total.extend([right(format_currency(total_cost)), Cell::from("")]);
+    }
 
     let table = Table::new(body, widths)
         .header(Row::new(headers).style(Style::default().add_modifier(Modifier::BOLD)))
@@ -203,8 +209,10 @@ fn table_row(row: &FlatRow<'_>, columns: Columns) -> Row<'static> {
         cells.push(right(format_number(summary.cache_read_tokens)));
         cells.push(right(format_number(summary.total_tokens())));
     }
-    cells.push(right(format_currency(summary.total_cost)));
-    cells.push(share_cell(node.share, family, columns.bar));
+    if columns.cost {
+        cells.push(right(format_currency(summary.total_cost)));
+        cells.push(share_cell(node.share, family, columns.bar));
+    }
     Row::new(cells)
 }
 
@@ -255,9 +263,15 @@ fn share_cell(share: f64, family: Family, bar: bool) -> Cell<'static> {
     ]))
 }
 
-fn render_detail(frame: &mut Frame<'_>, area: Rect, rows: &[FlatRow<'_>], row: &FlatRow<'_>) {
+fn render_detail(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    rows: &[FlatRow<'_>],
+    row: &FlatRow<'_>,
+    cost: bool,
+) {
     let [left, right_area] =
-        Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(area);
+        Layout::horizontal([Constraint::Fill(1), Constraint::Fill(u16::from(cost))]).areas(area);
     let mut path = vec![sanitize_terminal_text(&row.node.label)];
     let mut parent = row.parent_key_path.as_deref();
     while let Some(key) = parent {
@@ -278,19 +292,27 @@ fn render_detail(frame: &mut Frame<'_>, area: Rect, rows: &[FlatRow<'_>], row: &
     } else {
         0.0
     };
+    let figures = if cost {
+        format!(
+            "cost {}    tokens {}    of session {of_session:.1}%",
+            format_currency(row.node.summary.total_cost),
+            format_number(row.node.summary.total_tokens()),
+        )
+    } else {
+        format!("tokens {}", format_number(row.node.summary.total_tokens()))
+    };
     frame.render_widget(
         Paragraph::new(vec![
             Line::from(path.join(" › ")).style(Style::default().add_modifier(Modifier::BOLD)),
-            Line::from(format!(
-                "cost {}    tokens {}    of session {of_session:.1}%",
-                format_currency(row.node.summary.total_cost),
-                format_number(row.node.summary.total_tokens()),
-            )),
+            Line::from(figures),
         ])
         .block(Block::default().borders(Borders::ALL).title("Selected")),
         left,
     );
 
+    if !cost {
+        return;
+    }
     let total = row.node.summary.total_cost;
     let mut breakdowns = row.node.summary.model_breakdowns.iter().collect::<Vec<_>>();
     breakdowns.sort_by(|a, b| b.cost.total_cmp(&a.cost));

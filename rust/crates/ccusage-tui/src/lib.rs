@@ -14,6 +14,7 @@ pub struct TreeReport {
     pub title: String,
     pub subtitle: String,
     pub roots: Vec<UsageTreeNode>,
+    pub no_cost: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -37,7 +38,13 @@ pub(crate) fn initial_state(roots: &mut [UsageTreeNode], initial: InitialView) -
 
 pub fn run(mut report: TreeReport, initial: InitialView) -> std::io::Result<()> {
     let mut state = initial_state(&mut report.roots, initial);
-    let mut terminal = ratatui::try_init()?;
+    let mut terminal = match ratatui::try_init() {
+        Ok(terminal) => terminal,
+        Err(error) => {
+            ratatui::restore();
+            return Err(error);
+        }
+    };
     let result = event_loop(&mut terminal, &mut report, &mut state);
     ratatui::restore();
     result
