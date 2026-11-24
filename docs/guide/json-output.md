@@ -581,7 +581,7 @@ This excerpt shows one session; `totals` covers the complete report.
 
 ### Session Tree Reports
 
-`ccusage claude session --tree --json` nests each session's main thread and subagents under `children`. Nodes use the same token and cost fields as session rows, plus `kind`, `label`, and `share`:
+`ccusage claude session --tree --json` nests each session's main thread and subagents under `children`. Nodes use the same token and cost fields as session rows, plus `kind`, `label`, `agentType`, and `share`. This excerpt shows one session; `totals` covers the complete report:
 
 ```json
 {
@@ -590,10 +590,21 @@ This excerpt shows one session; `totals` covers the complete report.
 			"kind": "session",
 			"sessionId": "abc123",
 			"label": "Refactor the loader",
+			"agentType": "",
+			"projectPath": "my-project",
 			"totalCost": 1.25,
 			"share": 1,
+			"firstActivity": "2026-11-24T09:00:00.000Z",
+			"lastActivity": "2026-11-24T10:30:00.000Z",
 			"children": [
-				{ "kind": "main", "label": "main thread", "totalCost": 0.5, "share": 0.4, "children": [] },
+				{
+					"kind": "main",
+					"label": "main thread",
+					"agentType": "",
+					"totalCost": 0.5,
+					"share": 0.4,
+					"children": []
+				},
 				{
 					"kind": "subagent",
 					"agentId": "a1b2c3",
@@ -605,11 +616,14 @@ This excerpt shows one session; `totals` covers the complete report.
 				}
 			]
 		}
-	]
+	],
+	"totals": {
+		"totalCost": 1.25
+	}
 }
 ```
 
-`kind` is `session`, `main`, `subagent`, `own` (a subagent's own turns when it started subagents), or `workflow` (`workflowId`). Nodes also carry `inputTokens`, `outputTokens`, `cacheCreationTokens`, `cacheReadTokens`, `totalTokens`, `modelsUsed`, and `modelBreakdowns`; `share` is the fraction of the session's cost. A session without subagents has an empty `children`. See [Tree View](/guide/session-reports#tree-view).
+`kind` is `session`, `main`, `subagent`, `own` (a subagent's own turns when it started subagents), or `workflow`. Session nodes carry `sessionId` and `projectPath`, subagents `agentId`, and workflows `workflowId`. Every node also carries `inputTokens`, `outputTokens`, `cacheCreationTokens`, `cacheReadTokens`, `totalTokens`, `firstActivity`, `lastActivity`, `modelsUsed`, and `modelBreakdowns`; the example omits most of them. `share` is the fraction of the session's cost. `totals` has the same shape as the totals of a session report. A session without subagents has an empty `children`. See [Tree View](/guide/session-reports#tree-view).
 
 ### Claude Code Daily, Weekly, and Monthly Reports
 

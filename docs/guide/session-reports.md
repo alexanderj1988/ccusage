@@ -77,15 +77,15 @@ ccusage claude session --tree --id <session-id>
 
 In a terminal the view is interactive:
 
-| Key            | Action                                  |
-| -------------- | --------------------------------------- |
-| ↑/↓, k/j       | Move                                    |
-| →/l, ←/h       | Expand, collapse, or jump to the parent |
-| Enter, Space   | Toggle                                  |
-| e / c          | Expand all / collapse all               |
-| s              | Sort chronologically or by cost         |
-| PgUp/PgDn, g/G | Page, jump to the first or last row     |
-| q, Esc, Ctrl-C | Quit                                    |
+| Key                      | Action                                  |
+| ------------------------ | --------------------------------------- |
+| ↑/↓, k/j                 | Move                                    |
+| →/l, ←/h                 | Expand, collapse, or jump to the parent |
+| Enter, Space             | Toggle                                  |
+| e / c                    | Expand all / collapse all               |
+| s                        | Sort chronologically or by cost         |
+| PgUp/PgDn, g/G, Home/End | Page, jump to the first or last row     |
+| q, Esc, Ctrl-C           | Quit                                    |
 
 Narrow terminals drop the share bar first, then the cache columns, the Agent column, and the Model column. The detail panel is hidden below 60 columns.
 
