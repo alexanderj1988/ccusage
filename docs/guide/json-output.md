@@ -590,17 +590,17 @@ This excerpt shows one session; `totals` covers the complete report.
 			"kind": "session",
 			"sessionId": "abc123",
 			"label": "Refactor the loader",
-			"agentType": "",
+			"agentType": "Claude · main",
 			"projectPath": "my-project",
 			"totalCost": 1.25,
-			"share": 1,
+			"share": 0.5,
 			"firstActivity": "2026-11-24T09:00:00.000Z",
 			"lastActivity": "2026-11-24T10:30:00.000Z",
 			"children": [
 				{
 					"kind": "main",
 					"label": "main thread",
-					"agentType": "",
+					"agentType": "main",
 					"totalCost": 0.5,
 					"share": 0.4,
 					"children": []
@@ -618,12 +618,12 @@ This excerpt shows one session; `totals` covers the complete report.
 		}
 	],
 	"totals": {
-		"totalCost": 1.25
+		"totalCost": 2.5
 	}
 }
 ```
 
-`kind` is `session`, `main`, `subagent`, `own` (a subagent's own turns when it started subagents), or `workflow`. Session nodes carry `sessionId` and `projectPath`, subagents `agentId`, and workflows `workflowId`. Every node also carries `inputTokens`, `outputTokens`, `cacheCreationTokens`, `cacheReadTokens`, `totalTokens`, `firstActivity`, `lastActivity`, `modelsUsed`, and `modelBreakdowns`; the example omits most of them. `share` is the fraction of the session's cost. `totals` has the same shape as the totals of a session report. A session without subagents has an empty `children`. See [Tree View](/guide/session-reports#tree-view).
+`kind` is `session`, `main`, `subagent`, `own` (a subagent's own turns when it started subagents), or `workflow`. Session nodes carry `sessionId` and `projectPath`, subagents `agentId`, and workflows `workflowId`. Every node also carries `inputTokens`, `outputTokens`, `cacheCreationTokens`, `cacheReadTokens`, `totalTokens`, `firstActivity`, `lastActivity`, `modelsUsed`, and `modelBreakdowns`; the example omits most of them. `share` is the node's cost divided by its parent's cost; session nodes are divided by the report's total cost, so the example session is half of a report that totals `2.5`. `agentType` is `Claude · main` for sessions, `main` for the main thread, the subagent's `agentType` from its metadata (`unknown` when missing) for subagents and for their `own` nodes, and `workflow` for workflows. With `--no-cost`, every `totalCost` field and the cost inside `modelBreakdowns` is removed, but `share` stays. `totals` has the same shape as the totals of a session report. A session without subagents has an empty `children`. See [Tree View](/guide/session-reports#tree-view).
 
 ### Claude Code Daily, Weekly, and Monthly Reports
 
