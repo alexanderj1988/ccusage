@@ -8,9 +8,9 @@ use ccusage_core::{
         session_cost_ordering,
     },
     fast::FxHashMap,
-    print_json_or_jq, print_usage_table, sort_summaries,
+    print_json_or_jq, print_usage_table, print_usage_tree_table, sort_summaries,
     summary::{Bucket, summarize_bucket, summarize_by_day},
-    totals_json, wants_json,
+    totals_json, tree_report_json, wants_json,
 };
 use serde_json::json;
 
@@ -20,6 +20,7 @@ use crate::{
         print_blocks_table, sort_blocks,
     },
     load_daily_summaries, load_entries, load_entries_since,
+    session_tree::build_session_trees,
 };
 
 mod json;
@@ -115,6 +116,9 @@ fn run_bucket(shared: SharedArgs, bucket: Bucket, project: Option<&str>) -> Resu
 }
 
 fn run_session(args: SessionArgs, project: Option<&str>) -> Result<()> {
+    if args.tree {
+        return run_session_tree(args, project);
+    }
     let shared = args.shared.clone();
     if let Some(id) = args.id {
         return run_session_id(&id, &shared);
@@ -150,6 +154,78 @@ fn run_session(args: SessionArgs, project: Option<&str>) -> Result<()> {
         None,
     )?;
     Ok(())
+}
+
+const SESSION_TREE_TITLE: &str = "Claude Code Usage Report - Sessions";
+
+fn run_session_tree(args: SessionArgs, project: Option<&str>) -> Result<()> {
+    let shared = args.shared.clone();
+    let project = if args.id.is_some() { None } else { project };
+    let mut entries = load_entries_since(&shared, project)?;
+    if let Some(id) = args.id.as_deref() {
+        entries.retain(|entry| {
+            entry.recorded_session_id.as_deref() == Some(id) || entry.session_id.as_ref() == id
+        });
+        if entries.is_empty() {
+            if wants_json(&shared) {
+                ccusage_core::outln!("null")?;
+            } else {
+                ccusage_core::errln!("No session found with ID: {id}");
+            }
+            return Ok(());
+        }
+    }
+    let trees = build_session_trees(&entries, session_cost_ordering(&shared))?;
+    for warning in &trees.warnings {
+        ccusage_core::debug_log(&shared, warning);
+    }
+    if wants_json(&shared) {
+        return print_json_or_jq(
+            tree_report_json(&trees.roots),
+            shared.jq.as_deref(),
+            shared.no_cost,
+        );
+    }
+    let subtitle = tree_subtitle(&trees.roots);
+    let mut roots = trees.roots;
+    ccusage_core::tree::add_model_rows(&mut roots);
+    ccusage_core::tree::assign_shares(&mut roots);
+    if !roots.is_empty() && ccusage_tui::interactive_terminal_available() {
+        let report = ccusage_tui::TreeReport {
+            title: SESSION_TREE_TITLE.to_string(),
+            subtitle,
+            roots: roots.clone(),
+            no_cost: shared.no_cost,
+        };
+        let initial = if args.id.is_some() {
+            ccusage_tui::InitialView::Single
+        } else {
+            ccusage_tui::InitialView::Overview
+        };
+        match ccusage_tui::run(report, initial) {
+            Ok(()) => return Ok(()),
+            Err(error) => {
+                ccusage_core::debug_log(&shared, format!("Interactive view unavailable: {error}"));
+            }
+        }
+    }
+    print_usage_tree_table(SESSION_TREE_TITLE, &roots, &shared)
+}
+
+fn tree_subtitle(roots: &[ccusage_core::tree::UsageTreeNode]) -> String {
+    let count = roots.len();
+    let noun = if count == 1 { "session" } else { "sessions" };
+    let resolved = roots.iter().any(|root| {
+        root.children
+            .iter()
+            .any(|child| child.kind != ccusage_core::tree::TreeNodeKind::Main)
+    });
+    let suffix = if resolved {
+        " · subagents resolved"
+    } else {
+        ""
+    };
+    format!("Detected: Claude · {count} {noun}{suffix}")
 }
 
 fn load_session_rows(shared: &SharedArgs, project: Option<&str>) -> Result<Vec<UsageSummary>> {
@@ -384,5 +460,33 @@ mod tests {
 
         assert_eq!(rows.len(), 1);
         assert!((rows[0].total_cost - 1.46).abs() < 1e-9);
+    }
+
+    #[test]
+    fn session_tree_roots_match_session_rows() {
+        let fixture = crate::session_tree::tests::tree_fixture();
+        let shared = crate::session_tree::tests::tree_shared();
+        let (rows, trees) = Environment::with_var("CLAUDE_CONFIG_DIR", fixture.root()).run(|| {
+            let rows = load_session_rows(&shared, None).unwrap();
+            let entries = load_entries_since(&shared, None).unwrap();
+            let trees =
+                crate::session_tree::build_session_trees(&entries, SortOrder::Desc).unwrap();
+            (rows, trees)
+        });
+        assert_eq!(rows.len(), trees.roots.len());
+        for root in &trees.roots {
+            let row = rows
+                .iter()
+                .find(|row| row.session_id.as_deref() == root.id.as_deref())
+                .unwrap();
+            assert_eq!(row.input_tokens, root.summary.input_tokens);
+            assert_eq!(row.output_tokens, root.summary.output_tokens);
+            assert_eq!(
+                row.cache_creation_tokens,
+                root.summary.cache_creation_tokens
+            );
+            assert_eq!(row.cache_read_tokens, root.summary.cache_read_tokens);
+            assert_eq!(row.total_cost.to_bits(), root.summary.total_cost.to_bits());
+        }
     }
 }

@@ -65,6 +65,34 @@ You can find Claude session IDs by running `ccusage claude session` and looking 
 
 For Codex, use the `sessionId` from `ccusage codex session --json`. The lookup accepts that full ID, its JSONL filename with or without the `.jsonl` or `.jsonl.zst` extension, the trailing UUID, or a `codex://threads/<uuid>` URI. A shortened UUID is not accepted, and a UUID that matches more than one session is reported as ambiguous.
 
+## Tree View
+
+A session often covers one task. `--tree` shows what that task cost, split into the main thread and every subagent it started:
+
+```bash
+ccusage claude session --tree
+ccusage claude session --tree --since 20261124
+ccusage claude session --tree --id <session-id>
+```
+
+In a terminal the view is interactive:
+
+| Key                      | Action                                  |
+| ------------------------ | --------------------------------------- |
+| ↑/↓, k/j                 | Move                                    |
+| →/l, ←/h                 | Expand, collapse, or jump to the parent |
+| Enter, Space             | Toggle                                  |
+| e / c                    | Expand all / collapse all               |
+| s                        | Sort chronologically or by cost         |
+| PgUp/PgDn, g/G, Home/End | Page, jump to the first or last row     |
+| q, Esc, Ctrl-C           | Quit                                    |
+
+Narrow terminals drop the share bar first, then the cache columns, the Agent column, and the Model column. The detail panel is hidden below 60 columns.
+
+When the output is piped or `--json` is set, ccusage prints the fully expanded tree instead of starting the interactive view. Session labels come from the session title (`/rename` or the generated title); subagent labels come from the task description Claude Code stores next to each subagent transcript. Subagents that started their own subagents appear nested, with an `own turns` row for their own usage, and workflows appear as `workflow wf_<id>` nodes. The Model column names the model when a row used one, and `N models` when it used several; a row that used several models without having subagents gets one child row per model with that model's tokens, cost, and share. A session without subagents that never switched models has no children.
+
+The tree is available for Claude Code only; `ccusage session --tree` prints a hint to use `ccusage claude session --tree`. A session's tree adds up to its row in `ccusage claude session`. See [JSON Output](/guide/json-output#session-tree-reports) for the nested `children` structure.
+
 ## Example Output
 
 `ccusage session` lists the most expensive session first. This excerpt from the fixture report keeps that first row and the Total row; the other sessions are omitted:

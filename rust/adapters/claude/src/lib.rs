@@ -14,6 +14,7 @@ mod diagnostics;
 mod load;
 mod mirror_claims;
 mod paths;
+mod session_tree;
 mod source;
 mod usage_wire;
 

@@ -13,6 +13,7 @@ pub mod progress;
 pub mod project_names;
 pub mod sort;
 pub mod summary;
+pub mod tree;
 pub mod types;
 pub mod window;
 
@@ -29,15 +30,15 @@ pub use diagnostics::{Diagnostics, Skip, SkipKind};
 pub use error::{CliError, Context, Result, cli_error};
 pub use output::{
     UsageTableOptions, agent_summary_json, attach_estimated_models, attach_unpriced_models,
-    first_column, format_currency, format_models_multiline, format_number, json_float,
-    json_value_u64, non_empty_json_string, print_estimated_pricing_notes_for_models,
+    first_column, format_currency, format_model_list, format_models_multiline, format_number,
+    json_float, json_value_u64, non_empty_json_string, print_estimated_pricing_notes_for_models,
     print_json_or_jq, print_missing_pricing_warnings_for_models, print_usage_table,
-    print_usage_table_with_options, sanitize_terminal_text, should_use_compact_layout,
-    summary_period, totals_json, wants_json,
+    print_usage_table_with_options, print_usage_tree_table, sanitize_terminal_text,
+    should_use_compact_layout, summary_period, totals_json, tree_report_json, wants_json,
 };
 pub use pricing::{Pricing, PricingMap};
 pub(crate) use project_names::parse_project_aliases;
-pub(crate) use project_names::short_model_name;
+pub use project_names::short_model_name;
 pub use project_names::{format_breakdown_model_label, format_project_name};
 pub use summary::{SessionAccumulator, sort_summaries, summarize_by_key_target, week_start};
 pub use types::*;

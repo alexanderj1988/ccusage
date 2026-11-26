@@ -204,7 +204,7 @@ impl LoadedEntry {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UsageSummary {
     #[serde(skip_serializing_if = "Option::is_none")]

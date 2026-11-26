@@ -203,6 +203,15 @@ ccusage claude daily --instances --project myproject
 ccusage claude daily --instances --project-aliases "uuid-project=Frontend App"
 ```
 
+### Claude Session Tree
+
+`--tree` on `ccusage claude session` shows each session as a tree of its main thread and subagents (interactive in a terminal). It combines with `--id`, `--since`, `--until`, and `--project`, and prints a static table or nested JSON when piped or used with `--json`. It is not available on the unified `ccusage session`. See [Tree View](/guide/session-reports#tree-view).
+
+```bash
+ccusage claude session --tree
+ccusage claude session --tree --id <session-id>
+```
+
 ### Weekly Command
 
 Options for weekly reports:

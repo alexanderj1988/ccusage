@@ -75,6 +75,7 @@ pub(super) struct ClaudeEntry {
     pub(super) original_model: Option<String>,
     pub(super) request: dedupe::Request,
     pub(super) is_sidechain: bool,
+    pub(super) source_file: Arc<Path>,
     pub(super) entry: LoadedEntry,
 }
 
@@ -393,6 +394,7 @@ pub(super) fn read_usage_file_with_diagnostics(
     let (session_id, project_path) = extract_session_parts(path, projects_root);
     let session_id: Arc<str> = Arc::from(session_id);
     let project_path: Arc<str> = Arc::from(project_path);
+    let source_file: Arc<Path> = Arc::from(path);
     daily::read_usage_file(
         path,
         projects_root,
@@ -407,6 +409,7 @@ pub(super) fn read_usage_file_with_diagnostics(
                 original_model: parsed.raw_model,
                 request: parsed.key.request,
                 is_sidechain: parsed.is_sidechain,
+                source_file: Arc::clone(&source_file),
                 entry: LoadedEntry {
                     model,
                     usage_limit_reset_time: usage_limit_reset_time_from_line_bytes(

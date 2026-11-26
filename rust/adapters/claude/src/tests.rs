@@ -1603,6 +1603,7 @@ fn loaded_usage_entry(fixture: UsageEntryFixture) -> ClaudeEntry {
         original_model: Some("claude-sonnet-4-20250514".to_string()),
         request: crate::dedupe::Request::Id(fixture.request_id.into()),
         is_sidechain: fixture.is_sidechain,
+        source_file: Arc::from(Path::new("fixture.jsonl")),
         entry: LoadedEntry {
             usage: TokenUsageRaw {
                 input_tokens: 0,
@@ -1721,4 +1722,31 @@ fn single_and_multi_thread_keep_the_same_copy_from_invalid_utf8_project_dirs() {
             assert_eq!(load(false), single);
         }
     });
+}
+
+#[test]
+fn loaded_entries_remember_their_source_file() {
+    let fixture = fs_fixture!({
+        "projects/project-a/session-a.jsonl": r#"{"timestamp":"2026-11-24T10:00:00Z","sessionId":"session-a","requestId":"req-main","costUSD":1.0,"message":{"id":"msg-main","model":"claude-opus-4-7","usage":{"input_tokens":10,"output_tokens":1}}}"#,
+        "projects/project-a/session-a/subagents/agent-a1.jsonl": r#"{"timestamp":"2026-11-24T10:01:00Z","sessionId":"session-a","isSidechain":true,"requestId":"req-a1","costUSD":0.5,"message":{"id":"msg-a1","model":"claude-haiku-4-5","usage":{"input_tokens":5,"output_tokens":1}}}"#,
+    });
+    let shared = SharedArgs {
+        mode: CostMode::Display,
+        ..SharedArgs::default()
+    };
+    let entries = Environment::with_var("CLAUDE_CONFIG_DIR", fixture.root())
+        .run(|| load_deduped_entries(&shared, None).unwrap().entries);
+    let mut names = entries
+        .iter()
+        .map(|entry| {
+            entry
+                .source_file
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect::<Vec<_>>();
+    names.sort();
+    assert_eq!(names, ["agent-a1.jsonl", "session-a.jsonl"]);
 }
